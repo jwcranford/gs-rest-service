@@ -3,6 +3,8 @@ package hello.client.test;
 import hello.client.ApiClient;
 import hello.client.api.GreetingControllerApi;
 import hello.client.model.Greeting;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 public class Main {
 
@@ -14,6 +16,26 @@ public class Main {
         try {
             Greeting result = apiInstance.greetingUsingGET(name);
             System.out.println(result);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().value() == 408) {
+                System.out.println("408 - this is retriable");
+            } else {
+                throw e;
+            }
+        } catch (HttpServerErrorException e) {
+            final int status = e.getStatusCode().value();
+            switch (status) {
+                case 502:
+                case 503:
+                case 504:
+                    System.out.format("%d - retriable", status).println();
+                    break;
+                case 500:
+                    // check Retry-After and X-Retriable
+                    throw e;
+                default:
+                    throw e;
+            }
         } catch (RuntimeException e) {
             System.err.println("Exception when calling GreetingControllerApi#greetingUsingGET");
             e.printStackTrace();
