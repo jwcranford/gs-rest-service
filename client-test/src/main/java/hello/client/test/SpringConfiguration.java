@@ -38,7 +38,8 @@ public class SpringConfiguration {
 
     @Bean
     public static Function<HttpStatusCodeException, Boolean> isRetryable() {
-        return e -> retryableStatusCodes.contains(e.getRawStatusCode());
+        return e -> retryableStatusCodes.contains(e.getRawStatusCode())
+                || (e.getResponseHeaders().containsKey("Retry-After"));
     }
 
 }
