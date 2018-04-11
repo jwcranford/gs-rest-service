@@ -12,15 +12,15 @@ import java.util.List;
 
 
 /**
- * If the response represents a retriable error,
- * then RetriableResponseInterceptor wraps the exception in a RetriableException.
+ * If the response represents a retryable error,
+ * then RetryableResponseInterceptor wraps the exception in a RetryableException.
  */
-public class RetriableResponseInterceptor implements ClientHttpRequestInterceptor {
+public class RetryableResponseInterceptor implements ClientHttpRequestInterceptor {
 
-    private final List<Integer> retriableStatusCodes;
+    private final List<Integer> retryableStatusCodes;
 
-    public RetriableResponseInterceptor(Integer ... retriableStatusCodes) {
-        this.retriableStatusCodes = Arrays.asList(retriableStatusCodes);
+    public RetryableResponseInterceptor(Integer ... retryableStatusCodes) {
+        this.retryableStatusCodes = Arrays.asList(retryableStatusCodes);
     }
 
     @Override
@@ -29,27 +29,27 @@ public class RetriableResponseInterceptor implements ClientHttpRequestIntercepto
     {
         try {
             final ClientHttpResponse response = clientHttpRequestExecution.execute(httpRequest, bytes);
-            if (retriableStatusCodes.contains(response.getRawStatusCode())) {
-                throw new RetriableException(new HttpStatusCodeException(response.getStatusCode(),
+            if (retryableStatusCodes.contains(response.getRawStatusCode())) {
+                throw new RetryableException(new HttpStatusCodeException(response.getStatusCode(),
                         response.getStatusText()) {});
             }
             return response;
         } catch (IOException e) {
             // IOExceptions are automatically retriable
-            throw new RetriableException(e);
+            throw new RetryableException(e);
         }
     }
 
-    public static class RetriableException extends RuntimeException {
-        public RetriableException(String msg) {
+    public static class RetryableException extends RuntimeException {
+        public RetryableException(String msg) {
             super(msg);
         }
 
-        public RetriableException(String msg, Throwable cause) {
+        public RetryableException(String msg, Throwable cause) {
             super(msg, cause);
         }
 
-        public RetriableException(Throwable cause) {
+        public RetryableException(Throwable cause) {
             super(cause);
         }
     }

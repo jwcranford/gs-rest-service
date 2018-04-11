@@ -1,6 +1,5 @@
 package hello.client.test;
 
-import hello.client.ApiClient;
 import hello.client.api.GreetingControllerApi;
 import hello.client.model.Greeting;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,16 +7,18 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 
 @SpringBootApplication
 public class Main {
 
-    private final GreetingControllerApi greetingControllerApi;
+    private final GreetingService greetingService;
 
     @Autowired
-    public Main(GreetingControllerApi greetingControllerApi) {
-        this.greetingControllerApi = greetingControllerApi;
+    public Main(GreetingService greetingService) {
+        this.greetingService = greetingService;
     }
 
     public static void main(String[] args) {
@@ -25,37 +26,27 @@ public class Main {
     }
 
     @Bean
-    public static RestTemplate restTemplate() {
-        final RestTemplate restTemplate = new RestTemplate();
-        restTemplate.getInterceptors().add(new RetriableResponseInterceptor(408, 502, 503, 504));
-        return restTemplate;
-    }
-
-    @Bean
-    public static ApiClient apiClient(RestTemplate restTemplate) {
-        final ApiClient client = new ApiClient(restTemplate);
-        client.setBasePath("http://localhost:8080");
-        return client;
-    }
-
-    @Bean
-    public static GreetingControllerApi greetingControllerApi(ApiClient apiClient) {
-        return new GreetingControllerApi(apiClient);
-    }
-
-    @Bean
-    public CommandLineRunner run(GreetingControllerApi greetingControllerApi)
+    public CommandLineRunner run()
     {
         return args -> {
-            String name = "World"; // String | name
-            try {
-                System.out.println(greeting(name).toString());
-            } catch (RetriableResponseInterceptor.RetriableException e) {
-                System.out.println("SUCCESS! retriable exception " + e.toString());
-            }
+            String name = "Bob"; // String | name
+            System.out.println(greetingService.greeting(name).toString());
         };
     }
 
+}
+
+@Service
+class GreetingService {
+    private final GreetingControllerApi greetingControllerApi;
+
+    @Autowired
+    public GreetingService(GreetingControllerApi greetingControllerApi) {
+        this.greetingControllerApi = greetingControllerApi;
+    }
+
+    @Retryable(value={HttpStatusCodeException.class},
+            exceptionExpression = "#{@isRetryable.apply(#root)}")
     public Greeting greeting(String name) {
         return greetingControllerApi.greetingUsingGET(name);
     }
