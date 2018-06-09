@@ -2,6 +2,7 @@ package hello.client.test;
 
 import hello.client.ApiClient;
 import hello.client.api.GreetingControllerApi;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.retry.annotation.EnableRetry;
@@ -18,6 +19,10 @@ public class SpringConfiguration {
 
     private static final List<Integer> retryableStatusCodes = Arrays.asList(408, 502, 503, 504);
 
+    @Value("${basePath:http://localhost:8080}")
+    private String basePath = "http://localhost:8080";
+
+
     @Bean
     public static RestTemplate restTemplate() {
         final RestTemplate restTemplate = new RestTemplate();
@@ -25,9 +30,9 @@ public class SpringConfiguration {
     }
 
     @Bean
-    public static ApiClient apiClient(RestTemplate restTemplate) {
+    public ApiClient apiClient(RestTemplate restTemplate) {
         final ApiClient client = new ApiClient(restTemplate);
-        client.setBasePath("http://localhost:8080");
+        client.setBasePath(basePath);
         return client;
     }
 
