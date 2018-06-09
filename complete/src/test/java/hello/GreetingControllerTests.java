@@ -17,9 +17,11 @@ package hello;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,21 @@ public class GreetingControllerTests {
         this.mockMvc.perform(get("/greeting").param("name", "Spring Community"))
                 .andDo(print()).andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").value("Hello, Spring Community!"));
+    }
+
+    @Test
+    public void param503ShouldReturn503() throws Exception {
+
+        this.mockMvc.perform(get("/greeting").param("name", "503"))
+                .andDo(print()).andExpect(status().is(503));
+    }
+
+    @Test
+    public void paramRetryAfterShouldReturn500() throws Exception {
+
+        this.mockMvc.perform(get("/greeting").param("name", "Retry-After"))
+                .andDo(print()).andExpect(status().is(500))
+                .andExpect(header().string("Retry-After", Matchers.notNullValue(String.class)));
     }
 
 }
