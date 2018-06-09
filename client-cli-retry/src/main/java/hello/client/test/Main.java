@@ -22,7 +22,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(Main.class);
+        SpringApplication.run(Main.class, args);
     }
 
     @Bean
@@ -30,6 +30,10 @@ public class Main {
     {
         return args -> {
             String name = "Bob"; // String | name
+            if (args != null && args.length >= 1) {
+                name = args[0];
+            }
+            System.out.println("Sending " + name);
             System.out.println(greetingService.greeting(name).toString());
         };
     }
